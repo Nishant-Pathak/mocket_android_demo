@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">mocket_demo</string>
     <string name="title_activity_maps">Map</string>
+    <string name="enable_gps">Enable GPS</string>
+    <string name="please_enable_gps">Please enable GPS</string>
+    <string name="enable">Enable</string>
+    <string name="ignore">Ignore</string>
 </resources>

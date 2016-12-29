@@ -1,46 +1,183 @@
 package com.nishant.mocket_demo;
 
-import android.support.v4.app.FragmentActivity;
+import android.Manifest;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AlertDialog;
+import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements
+  OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
-  private GoogleMap mMap;
+  private static final int REQUEST_PERMISSION = 1;
+  LocationRequest mLocationRequest;
+  GoogleApiClient mGoogleApiClient;
+
+  LatLng latLng;
+  GoogleMap mGoogleMap;
+  SupportMapFragment mFragment;
+  Marker currLocationMarker;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_maps);
-    // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-    SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-      .findFragmentById(R.id.map);
-    mapFragment.getMapAsync(this);
+
+    mFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+    mFragment.getMapAsync(this);
   }
 
+  @Override
+  protected void onResume() {
+    super.onResume();
+    LocationManager mlocManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+    boolean enabled = mlocManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+    if(!enabled) {
+      showDialogGPS();
+    }
+  }
 
   /**
-   * Manipulates the map once available.
-   * This callback is triggered when the map is ready to be used.
-   * This is where we can add markers or lines, add listeners or move the camera. In this case,
-   * we just add a marker near Sydney, Australia.
-   * If Google Play services is not installed on the device, the user will be prompted to install
-   * it inside the SupportMapFragment. This method will only be triggered once the user has
-   * installed Google Play services and returned to the app.
+   * Show a dialog to the user requesting that GPS be enabled
    */
-  @Override
-  public void onMapReady(GoogleMap googleMap) {
-    mMap = googleMap;
-
-    // Add a marker in Sydney and move the camera
-    LatLng sydney = new LatLng(-34, 151);
-    mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-    mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+  private void showDialogGPS() {
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setCancelable(false);
+    builder.setTitle(R.string.enable_gps);
+    builder.setMessage(R.string.please_enable_gps);
+    builder.setPositiveButton(R.string.enable, new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int which) {
+        startActivity(
+          new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+      }
+    });
+    builder.setNegativeButton(R.string.ignore, new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int which) {
+        dialog.dismiss();
+      }
+    });
+    AlertDialog alert = builder.create();
+    alert.show();
   }
+
+  private void requestPermission() {
+    ActivityCompat.requestPermissions(
+      this,
+      new String[] {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+      REQUEST_PERMISSION);
+  }
+
+  @Override
+  public void onMapReady(GoogleMap gMap) {
+    mGoogleMap = gMap;
+    if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+      ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+      requestPermission();
+      return;
+    }
+    mGoogleMap.setMyLocationEnabled(true);
+    buildGoogleApiClient();
+    mGoogleApiClient.connect();
+
+  }
+
+  protected synchronized void buildGoogleApiClient() {
+    mGoogleApiClient = new GoogleApiClient.Builder(this)
+      .addConnectionCallbacks(this)
+      .addOnConnectionFailedListener(this)
+      .addApi(LocationServices.API)
+      .build();
+  }
+
+  @Override
+  public void onConnected(Bundle bundle) {
+    if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+      ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+      requestPermission();
+      return;
+    }
+    Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+    if (mLastLocation != null) {
+      //place marker at current position
+      //mGoogleMap.clear();
+      latLng = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+      MarkerOptions markerOptions = new MarkerOptions();
+      markerOptions.position(latLng);
+      markerOptions.title("Current Position");
+      markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+      currLocationMarker = mGoogleMap.addMarker(markerOptions);
+    }
+
+    mLocationRequest = new LocationRequest();
+    mLocationRequest.setInterval(5000); //5 seconds
+    mLocationRequest.setFastestInterval(3000); //3 seconds
+    mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+    mLocationRequest.setSmallestDisplacement(0.1F); //1/10 meter
+
+    LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+  }
+
+  @Override
+  public void onConnectionSuspended(int i) {
+    Toast.makeText(this,"onConnectionSuspended",Toast.LENGTH_SHORT).show();
+  }
+
+  @Override
+  public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+    Toast.makeText(this,"onConnectionFailed",Toast.LENGTH_SHORT).show();
+  }
+
+  @Override
+  public void onLocationChanged(Location location) {
+
+    //place marker at current position
+    //mGoogleMap.clear();
+    if (currLocationMarker != null) {
+      currLocationMarker.remove();
+    }
+    latLng = new LatLng(location.getLatitude(), location.getLongitude());
+    MarkerOptions markerOptions = new MarkerOptions();
+    markerOptions.position(latLng);
+    markerOptions.title("Current Position");
+    markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+    currLocationMarker = mGoogleMap.addMarker(markerOptions);
+
+    Toast.makeText(this,"Location Changed",Toast.LENGTH_SHORT).show();
+
+    //zoom to current position:
+    CameraPosition cameraPosition = new CameraPosition.Builder()
+      .target(latLng).zoom(14).build();
+
+    mGoogleMap.animateCamera(CameraUpdateFactory
+      .newCameraPosition(cameraPosition));
+
+    //If you only need one location, unregister the listener
+    //LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+
+  }
+
 }
