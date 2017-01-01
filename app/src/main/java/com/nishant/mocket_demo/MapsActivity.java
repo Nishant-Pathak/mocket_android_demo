@@ -1,8 +1,33 @@
+/*
+ * The MIT License
+ *
+ * Copyright (c) 2016-17 Nishant Pathak
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
+ *
+ */
+
 package com.nishant.mocket_demo;
 
 import android.Manifest;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -33,21 +58,33 @@ public class MapsActivity extends FragmentActivity implements
   OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
   private static final int REQUEST_PERMISSION = 1;
-  LocationRequest mLocationRequest;
-  GoogleApiClient mGoogleApiClient;
 
-  LatLng latLng;
-  GoogleMap mGoogleMap;
-  SupportMapFragment mFragment;
-  Marker currLocationMarker;
+  private GoogleApiClient mGoogleApiClient;
+
+  private boolean isGpsDialogShown = false;
+
+  private MocketClient mMocketClient;
+
+  private LatLng latLng;
+  private GoogleMap mGoogleMap;
+  private Marker currLocationMarker;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_maps);
-
-    mFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+    SupportMapFragment mFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
     mFragment.getMapAsync(this);
+
+    // Initialize mocket client
+    mMocketClient = MocketClient.getInstance();
+    mMocketClient.init();
+  }
+
+  @Override
+  protected void onDestroy() {
+    mMocketClient.shutDown();
+    super.onDestroy();
   }
 
   @Override
@@ -65,21 +102,17 @@ public class MapsActivity extends FragmentActivity implements
    * Show a dialog to the user requesting that GPS be enabled
    */
   private void showDialogGPS() {
+    if (isGpsDialogShown) {
+      return;
+    }
+    isGpsDialogShown = true;
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
     builder.setCancelable(false);
     builder.setTitle(R.string.enable_gps);
     builder.setMessage(R.string.please_enable_gps);
-    builder.setPositiveButton(R.string.enable, new DialogInterface.OnClickListener() {
-      public void onClick(DialogInterface dialog, int which) {
-        startActivity(
-          new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-      }
-    });
-    builder.setNegativeButton(R.string.ignore, new DialogInterface.OnClickListener() {
-      public void onClick(DialogInterface dialog, int which) {
-        dialog.dismiss();
-      }
-    });
+    builder.setPositiveButton(R.string.enable, (dialog, which) -> startActivity(
+      new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)));
+    builder.setNegativeButton(R.string.ignore, (dialog, which) -> dialog.dismiss());
     AlertDialog alert = builder.create();
     alert.show();
   }
@@ -122,9 +155,9 @@ public class MapsActivity extends FragmentActivity implements
     }
     Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
     if (mLastLocation != null) {
-      //place marker at current position
-      //mGoogleMap.clear();
       latLng = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+      mMocketClient.pushLatLngToServer(latLng);
+
       MarkerOptions markerOptions = new MarkerOptions();
       markerOptions.position(latLng);
       markerOptions.title("Current Position");
@@ -132,7 +165,7 @@ public class MapsActivity extends FragmentActivity implements
       currLocationMarker = mGoogleMap.addMarker(markerOptions);
     }
 
-    mLocationRequest = new LocationRequest();
+    LocationRequest mLocationRequest = new LocationRequest();
     mLocationRequest.setInterval(5000); //5 seconds
     mLocationRequest.setFastestInterval(3000); //3 seconds
     mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
@@ -162,11 +195,9 @@ public class MapsActivity extends FragmentActivity implements
     latLng = new LatLng(location.getLatitude(), location.getLongitude());
     MarkerOptions markerOptions = new MarkerOptions();
     markerOptions.position(latLng);
-    markerOptions.title("Current Position");
+    markerOptions.title(getString(R.string.current_position));
     markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
     currLocationMarker = mGoogleMap.addMarker(markerOptions);
-
-    Toast.makeText(this,"Location Changed",Toast.LENGTH_SHORT).show();
 
     //zoom to current position:
     CameraPosition cameraPosition = new CameraPosition.Builder()
@@ -175,9 +206,6 @@ public class MapsActivity extends FragmentActivity implements
     mGoogleMap.animateCamera(CameraUpdateFactory
       .newCameraPosition(cameraPosition));
 
-    //If you only need one location, unregister the listener
-    //LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-
+    mMocketClient.pushLatLngToServer(latLng);
   }
-
 }

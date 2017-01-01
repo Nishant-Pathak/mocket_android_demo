@@ -5,4 +5,5 @@
     <string name="please_enable_gps">Please enable GPS</string>
     <string name="enable">Enable</string>
     <string name="ignore">Ignore</string>
+    <string name="current_position">Current Position</string>
 </resources>
