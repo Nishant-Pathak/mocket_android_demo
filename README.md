@@ -16,4 +16,4 @@ To run
 
 4. Run app add see location on server.
 
-![Demo Url](/demo.ogv)
+![Demo Url](/demo.gif)
