@@ -18,7 +18,7 @@ android {
     versionCode 1
     versionName "1.0"
     testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-    buildConfigField "String", "SERVER_HOST", '"192.168.0.109"'
+    buildConfigField "String", "SERVER_HOST", '"REPLACE_ME"'
     buildConfigField "Integer", "SERVER_PORT", "8080"
 
     multiDexEnabled true

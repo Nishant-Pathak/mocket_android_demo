@@ -41,7 +41,6 @@ dependencies {
 sourceCompatibility = "1.8"
 targetCompatibility = "1.8"
 
-/*
 jar {
   from {
     (configurations.runtime).collect {
@@ -52,5 +51,3 @@ jar {
     attributes("Main-Class": "com.mocket.server.MocketServer" )
   }
 }
-
-*/
