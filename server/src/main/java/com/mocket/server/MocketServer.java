@@ -24,33 +24,40 @@
  *
  */
 
-apply plugin: 'java'
+package com.mocket.server;
 
-repositories {
-  maven {
-    url 'https://jitpack.io'
-  }
-}
+import com.mocket.core.LatLong;
+import com.mocket.core.LatLangStreamHandler;
+import com.network.mocket.MocketException;
+import com.network.mocket.builder.server.Server;
+import com.network.mocket.builder.server.ServerBuilder;
+import com.network.mocket.helper.Pair;
 
-dependencies {
-  compile fileTree(dir: 'libs', include: ['*.jar'])
-  compile project(path: ':mocket_lib')
-  testCompile 'junit:junit:4.12'
-}
+import java.net.SocketAddress;
 
-sourceCompatibility = "1.8"
-targetCompatibility = "1.8"
+public class MocketServer {
+  private final static int serverPort = 8080;
+  private static Server<LatLong> server;
 
-/*
-jar {
-  from {
-    (configurations.runtime).collect {
-      it.isDirectory() ? it : zipTree(it)
+  public static void main(String... args) throws MocketException {
+    server = new ServerBuilder<>()
+      .port(serverPort)
+      .addHandler(new LatLangStreamHandler())
+      .build();
+    try {
+      while (true) {
+        Pair<SocketAddress, LatLong> readSocketAddressPair = server.read();
+        if (readSocketAddressPair != null) {
+          System.out.println(
+            "Got location from: " +
+              readSocketAddressPair.getFirst() +
+              ", as: " +
+              readSocketAddressPair.getSecond());
+        }
+      }
+    } catch (InterruptedException e) {
+      e.printStackTrace();
     }
-  }
-  manifest {
-    attributes("Main-Class": "com.mocket.server.MocketServer" )
+
   }
 }
-
-*/

@@ -24,7 +24,24 @@
  *
  */
 
-package com.example;
+package com.mocket.core;
 
-public class MyClass1 {
+import org.junit.Test;
+
+import static org.junit.Assert.*;
+
+/**
+ * Created by nishant on 1/1/17.
+ */
+public class BytesUtilTest {
+  @Test
+  public void toByteArray() throws Exception {
+
+  }
+
+  @Test
+  public void toObject() throws Exception {
+
+  }
+
 }

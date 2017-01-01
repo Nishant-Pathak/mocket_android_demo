@@ -31,6 +31,8 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.mocket.core.LatLong;
+import com.mocket.core.LatLangStreamHandler;
 import com.network.mocket.MocketException;
 import com.network.mocket.builder.client.Client;
 import com.network.mocket.builder.client.ClientBuilder;
@@ -46,7 +48,7 @@ class MocketClient {
 
   private ExecutorService executorService;
 
-  private volatile Client<LatLng> client;
+  private volatile Client<LatLong> client;
 
   private volatile boolean isInitialized;
 
@@ -65,7 +67,7 @@ class MocketClient {
         client = new ClientBuilder<LatLng>()
           .host(BuildConfig.SERVER_HOST, BuildConfig.SERVER_PORT)
           .ensureDelivery(false)
-      //    .addHandler(new LatLangStreamHandler())
+          .addHandler(new LatLangStreamHandler())
           .build();
         isInitialized = true;
       } catch (MocketException e) {
@@ -76,15 +78,20 @@ class MocketClient {
 
   void pushLatLngToServer(@NonNull LatLng location) {
     Objects.requireNonNull(location, "Location cannot be null");
-    if (isInitialized) {
-      try {
-        client.write(location);
-      } catch (InterruptedException | IOException e) {
-        e.printStackTrace();
+    executorService.execute(new Runnable() {
+      @Override
+      public void run() {
+        if (isInitialized) {
+          try {
+            client.write(new LatLong(location.latitude, location.longitude));
+          } catch (InterruptedException | IOException e) {
+            e.printStackTrace();
+          }
+        } else {
+          Log.d(TAG, "Not initialized yet");
+        }
       }
-    } else {
-      Log.d(TAG, "Not initialized yet");
-    }
+    });
   }
 
   void shutDown() {

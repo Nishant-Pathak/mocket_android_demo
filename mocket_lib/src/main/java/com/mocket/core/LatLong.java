@@ -24,33 +24,25 @@
  *
  */
 
-apply plugin: 'java'
+package com.mocket.core;
 
-repositories {
-  maven {
-    url 'https://jitpack.io'
+import java.io.Serializable;
+
+public class LatLong implements Serializable {
+  private double latitude;
+  private double longitude;
+
+  public LatLong(double latitude, double longitude) {
+    this.latitude = latitude;
+    this.longitude = longitude;
   }
-}
 
-dependencies {
-  compile fileTree(dir: 'libs', include: ['*.jar'])
-  compile project(path: ':mocket_lib')
-  testCompile 'junit:junit:4.12'
-}
-
-sourceCompatibility = "1.8"
-targetCompatibility = "1.8"
-
-/*
-jar {
-  from {
-    (configurations.runtime).collect {
-      it.isDirectory() ? it : zipTree(it)
-    }
+  @Override
+  public String toString() {
+    double var1 = this.latitude;
+    double var3 = this.longitude;
+    return (new StringBuilder(60))
+      .append("lat/lng: (").append(var1).append(",").append(var3).append(")").toString();
   }
-  manifest {
-    attributes("Main-Class": "com.mocket.server.MocketServer" )
-  }
-}
 
-*/
+}

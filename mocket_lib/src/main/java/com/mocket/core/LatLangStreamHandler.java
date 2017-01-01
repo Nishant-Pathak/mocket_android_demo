@@ -24,7 +24,31 @@
  *
  */
 
-package com.example;
+package com.mocket.core;
 
-public class MyClass {
+import com.network.mocket.handler.MocketStreamHandler;
+
+import java.io.IOException;
+import java.text.ParseException;
+
+public class LatLangStreamHandler implements MocketStreamHandler<LatLong> {
+  @Override
+  public byte[] encode(LatLong latLong) throws ParseException {
+    try {
+      return BytesUtil.toByteArray(latLong);
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new ParseException(e.getMessage(), 0);
+    }
+  }
+
+  @Override
+  public LatLong decode(byte[] bytes) throws ParseException {
+    try {
+      return BytesUtil.toObject(bytes);
+    } catch (IOException | ClassNotFoundException e) {
+      e.printStackTrace();
+      throw new ParseException(e.getMessage(), 0);
+    }
+  }
 }

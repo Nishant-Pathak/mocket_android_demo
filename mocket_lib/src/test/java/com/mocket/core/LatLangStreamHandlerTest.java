@@ -24,33 +24,24 @@
  *
  */
 
-apply plugin: 'java'
+package com.mocket.core;
 
-repositories {
-  maven {
-    url 'https://jitpack.io'
+import org.junit.Test;
+
+import static org.junit.Assert.*;
+
+/**
+ * Created by nishant on 1/1/17.
+ */
+public class LatLangStreamHandlerTest {
+  @Test
+  public void encode() throws Exception {
+
   }
-}
 
-dependencies {
-  compile fileTree(dir: 'libs', include: ['*.jar'])
-  compile project(path: ':mocket_lib')
-  testCompile 'junit:junit:4.12'
-}
+  @Test
+  public void decode() throws Exception {
 
-sourceCompatibility = "1.8"
-targetCompatibility = "1.8"
-
-/*
-jar {
-  from {
-    (configurations.runtime).collect {
-      it.isDirectory() ? it : zipTree(it)
-    }
   }
-  manifest {
-    attributes("Main-Class": "com.mocket.server.MocketServer" )
-  }
-}
 
-*/
+}
