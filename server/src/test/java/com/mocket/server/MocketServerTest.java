@@ -24,24 +24,13 @@
  *
  */
 
-package com.mocket.core;
+package com.mocket.server;
 
-import java.io.Serializable;
+import static org.junit.Assert.*;
 
-public class LatLong implements Serializable {
-  private double latitude;
-  private double longitude;
+/**
+ * Created by nishant on 2/1/17.
+ */
+public class MocketServerTest {
 
-  public LatLong(double latitude, double longitude) {
-    this.latitude = latitude;
-    this.longitude = longitude;
-  }
-
-  @Override
-  public String toString() {
-    double var1 = this.latitude;
-    double var3 = this.longitude;
-    return (new StringBuilder(60))
-      .append("lat/lng: (").append(var1).append(",").append(var3).append(")").toString();
-  }
 }

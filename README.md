@@ -2,15 +2,15 @@
 
 Mocket Android Demo App
 =======================
-
-Android app pushes the location coordinate to the server over Mocket socket.
+Implementation of ![Mocket](https://github.com/Nishant-Pathak/mocket) on android maps app,
+This app pushes periodic location coordinate to the server.
 
 To run
 ======
 
-1. Replace "REPLACE_ME" in app's build.gradle with server IP.
+1. Run ![MockerServer.java](/server/src/main/java/com/mocket/server/MocketServer.java) in server module.
 
-2. Run ![MockerServer.java](/server/src/main/java/com/mocket/server/MocketServer.java) in server module.
+2. Replace "REPLACE_ME" in app's build.gradle with server IP.
 
 3. Run app add see location updates on server on server.
 
